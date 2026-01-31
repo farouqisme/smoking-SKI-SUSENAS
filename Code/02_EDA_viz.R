@@ -13,6 +13,8 @@ library(dplyr)
 library(rio)
 library(ggplot2)
 library(scales)
+library(patchwork)
+
 
 #--> Import Data
 agr <- rio::import("Data/SUSENAS_SKI_AGR.dta")
@@ -101,5 +103,93 @@ ggplot(dat_dual, aes(x = usia)) +
   labs(x = "Kelompok Usia") + theme_minimal()
 
 
-# 4) distribusi prevalensi perokok berdasarkan kabupaten kota
-# 3) distribusi prevalensi perokok berdasarkan perokok
+# 3) distribusi prevalensi perokok berdasarkan kabupaten kota (perlu dibuat peta!)
+agr %>%
+  group_by(source, kab) %>% 
+  summarise(tot_pop = sum(pop, na.rm = TRUE),
+            tot_rokok = sum(rokok_tembakau, na.rm = T), .groups = "drop") %>% 
+  ggplot(aes(x = tot_rokok/tot_pop, fill = source, group = source)) +
+  geom_density(alpha = 0.3, adjust = 1) +
+  labs(
+    x = "Perokok tembakau/total populasi",
+    y = "Density",
+    fill = "Sumber Data"
+  ) +
+  theme_minimal()
+
+# 4) distribusi prevalensi perokok berdasarkan usia
+dat_ratio <- agr %>%
+  group_by(source, usia) %>%
+  summarise(
+    tot_pop = sum(pop, na.rm = TRUE),
+    rokok_all = sum(rokok_all, na.rm = TRUE),
+    rokok_tembakau = sum(rokok_tembakau, na.rm = TRUE),
+    rokok_elektrik = sum(rokok_elektrik, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    prev_all = rokok_all / tot_pop,
+    prev_tembakau = rokok_tembakau / tot_pop,
+    prev_elektrik = rokok_elektrik / tot_pop
+  ) %>%
+  select(source, usia, tot_pop, starts_with("prev_")) %>%   # ⬅️ JANGAN BUANG tot_pop
+  pivot_longer(
+    starts_with("prev_"),
+    names_to = "jenis",
+    values_to = "prev"
+  ) %>%
+  pivot_wider(
+    names_from  = source,
+    values_from = c(prev, tot_pop),
+    names_sep   = "_"
+  ) %>%
+  mutate(
+    ratio = prev_SUSENAS/prev_SKI,
+    
+    se_ratio = ratio * sqrt(
+      (1 - prev_SUSENAS) / (prev_SUSENAS * tot_pop_SUSENAS) +
+        (1 - prev_SKI)     / (prev_SKI     * tot_pop_SKI)
+    ),
+    
+    ratio_l = ratio - 1.96 * se_ratio,
+    ratio_u = ratio + 1.96 * se_ratio
+  )
+
+
+plot_ratio <- function(data, judul, ylim_use = NULL) {
+  ggplot(data, aes(x = usia, y = ratio)) +
+    geom_ribbon(
+      aes(ymin = ratio_l, ymax = ratio_u),
+      fill = "#1A7317",
+      alpha = 0.25
+    ) +
+    geom_line(color = "#1A7317", linewidth = 1) +
+    geom_point(color = "#1A7317", size = 2) +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    coord_cartesian(ylim = ylim_use) +
+    scale_y_continuous(name = "Rasio (SUSENAS / SKI)") +
+    labs(x = "Usia", title = judul) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "italic"),
+      axis.text.x = element_text(size = 8)
+    )
+}
+
+
+p_all <- plot_ratio(
+  dat_ratio %>% filter(jenis == "prev_all"),
+  "Rasio %Merokok"
+)
+
+p_tembakau <- plot_ratio(
+  dat_ratio %>% filter(jenis == "prev_tembakau"),
+  "Rasio %Rokok Tembakau"
+)
+
+p_elektrik <- plot_ratio(
+  dat_ratio %>% filter(jenis == "prev_elektrik"),
+  "Rasio %Rokok Elektrik"
+)
+
+p_all | p_tembakau | p_elektrik
