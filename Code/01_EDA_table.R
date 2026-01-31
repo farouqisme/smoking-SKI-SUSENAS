@@ -1,8 +1,7 @@
 
-###############################################################################
-##### Script untuk identifikasi perbedaan data SKI dan SUSENAS tahun 2023 #####
-##### Analisis dibagi menjadi dua tahap; EDA dan inferensial              #####
-###############################################################################
+#########################################################################
+#####        Rscript untuk generate table untuk analisis DEA        #####
+#########################################################################
 
 #--> Clean env.
 rm(list=ls())
@@ -19,11 +18,7 @@ library(scales)
 
 #--> Import Data
 agr <- rio::import("Data/SUSENAS_SKI_AGR.dta")
-ind <- rio::import("Data/IND_SUSENAS_SKI.dta")
 
-tes <- agr %>% filter(source == 1) %>% select(., c(rokok_tembakau,rokok_elektrik, rokok_all))
-
-#---------- EDA ----------#
 
 #--> Labeling
 ## Age group
