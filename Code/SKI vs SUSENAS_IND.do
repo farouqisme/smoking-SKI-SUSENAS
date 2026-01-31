@@ -42,8 +42,8 @@ gen rokok_tembakau = 0
 gen rokok_elektrik = 0
 	replace rokok_elektrik = 1 if inlist(R1206, 1, 2)
 gen rokok_all = 0
-	replace rokok_elektrik = 1 if rokok_tembakau == 1 & rokok_elektrik == 1
-
+	replace rokok_all = 1 if rokok_tembakau == 1 | rokok_elektrik == 1
+	
 ** pop
 gen pop = 1
 	
@@ -53,7 +53,7 @@ gen source = 1
 ** keep important data
 keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_PREV.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_PREV.dta", replace
 
 **---SKI 2023--**
 use "C:\Users\ASUS\OneDrive\DATASET BUAT OLAH-OLAH\BPS\SKI 2023\CISDI\ski_INDIVIDU.dta", clear
@@ -107,11 +107,11 @@ gen source = 2
 keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SKI_PREV.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\IND_SKI_PREV.dta", replace
 
-append using "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_PREV.dta"
+append using "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_PREV.dta"
 
 label define src 1 "SUSENAS" 2 "SKI"
 label values source src
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_SKI_AGR.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_SKI.dta", replace
