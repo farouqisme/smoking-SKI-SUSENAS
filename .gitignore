@@ -11,3 +11,6 @@
 
 # Raw Data
 data/*.dta
+
+# Rscript
+data/*.do

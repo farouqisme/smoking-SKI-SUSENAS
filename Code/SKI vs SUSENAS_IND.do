@@ -34,6 +34,8 @@ replace FWT_int = int(FWT_int)
 
 bysort URUT: gen hitung_rt = (_n == 1)
 
+clonevar kode_RT = URUT
+
 ** Rokok
 gen rokok_tembakau = 0
 	replace rokok_tembakau = 1 if inlist(R1207, 1, 2)
@@ -45,13 +47,13 @@ gen rokok_all = 0
 ** pop
 gen pop = 1
 	
-** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil)
-
 ** id
 gen source = 1
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\SUSENAS_PREV.dta", replace
+** keep important data
+keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
+
+save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_PREV.dta", replace
 
 **---SKI 2023--**
 use "C:\Users\ASUS\OneDrive\DATASET BUAT OLAH-OLAH\BPS\SKI 2023\CISDI\ski_INDIVIDU.dta", clear
@@ -85,6 +87,8 @@ replace FWT_int = int(FWT_int)
 
 bysort IDRT: gen hitung_rt = (_n == 1)
 
+clonevar kode_RT = IDRT
+destring kode_RT, replace
 ** Rokok
 gen rokok_all = 0
 	replace rokok_all = 1 if inlist(G16, 1, 2)
@@ -95,18 +99,19 @@ gen rokok_elektrik = 0
 
 ** pop
 gen pop = 1
-
-** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil)
-
+	
 ** id
 gen source = 2
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\SKI_PREV.dta", replace
+** keep important data
+keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
-append using "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\SUSENAS_PREV.dta"
+
+save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SKI_PREV.dta", replace
+
+append using "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_PREV.dta"
 
 label define src 1 "SUSENAS" 2 "SKI"
 label values source src
 
-save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\SUSENAS_SKI_AGR.dta", replace
+save "C:\Users\ASUS\OneDrive\CISDI - LOCAL DRIVE\SKI vs SUSENAS\IND_SUSENAS_SKI_AGR.dta", replace
