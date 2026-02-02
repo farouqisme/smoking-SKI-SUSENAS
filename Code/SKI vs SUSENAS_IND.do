@@ -60,7 +60,7 @@ gen pop = 1
 gen source = 1
 
 ** keep important data
-keep kodeprov kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
+keep kodeprov kodewil kode_RT usia FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
 save "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_PREV.dta", replace
 
@@ -114,7 +114,7 @@ gen pop = 1
 gen source = 2
 
 ** keep important data
-keep kodeprov kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
+keep kodeprov kodewil kode_RT FWT_int usia urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
 save "D:\smoking-SKI-SUSENAS\Data\IND_SKI_PREV.dta", replace
 

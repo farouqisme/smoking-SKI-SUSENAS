@@ -1,7 +1,7 @@
 
-###########################################################################
-#####        Rscript untuk generate dataviz untuk analisis DEA        #####
-###########################################################################
+#####################################################################
+#####        Rscript untuk generate dataviz analisis DEA        #####
+#####################################################################
 
 #--> Clean env.
 rm(list=ls())
@@ -62,6 +62,8 @@ agr %>%
   ) +
   theme_minimal()
 
+ggsave("Output/pop-kernel-dens-kabkota.png",get_last_plot())
+
 # 2) distribusi menurut kelompok umur
 dat_dual <- agr %>% mutate(pop = pop/1e3) %>%
   group_by(source, usia) %>%
@@ -109,8 +111,9 @@ ggplot(dat_dual, aes(x = usia)) +
   coord_cartesian(ylim = c(min(dat_dual$mean_pop_avg) * 0.9,scale_factor * 1.5)) + 
   labs(x = "Kelompok Usia") + theme_minimal()
 
+ggsave("Output/pop-distrasio-by-age.png",get_last_plot())
 
-# 3) distribusi prevalensi perokok berdasarkan kabupaten kota (perlu dibuat peta!)
+# 3) distribusi prevalensi perokok berdasarkan provinsi
 agr %>%
   group_by(source, kab) %>% 
   summarise(tot_pop = sum(pop, na.rm = TRUE),
@@ -124,84 +127,239 @@ agr %>%
   ) +
   theme_minimal()
 
-map1_prev <- agr %>%
-  group_by(source, kodeprov) %>% 
-  summarise(tot_pop = sum(pop, na.rm = TRUE),tot_rokok = sum(rokok_all, na.rm = TRUE),
-            tot_tembakau = sum(rokok_tembakau, na.rm = TRUE), tot_elektrik = sum(rokok_elektrik, na.rm = TRUE),.groups = "drop") %>% 
-  mutate(prev_all = tot_rokok / tot_pop, prev_tembakau = tot_tembakau / tot_pop, prev_elektrik = tot_elektrik / tot_pop) %>% 
-  pivot_wider(names_from  = source, values_from = c(prev_all, prev_tembakau, prev_elektrik)) %>%
-  group_by(kodeprov) %>%
-  summarise(across(everything(), ~ first(na.omit(.x))))
+ggsave("Output/smoke-kernel-dens-kabkota.png",get_last_plot())
 
-map1_prev <- map1_prev %>% mutate(ratio_all = prev_all_SUSENAS/prev_all_SKI, ratio_tembakau = prev_tembakau_SUSENAS/prev_tembakau_SKI,
-                                  ratio_elektrik = prev_elektrik_SUSENAS/prev_elektrik_SKI)
-
-map1_prev <- map1_prev %>%
-  mutate(ratio_class = case_when(
-    is.na(ratio_all) ~ "Tidak tersedia",ratio_all < 0.9 ~ "< 0.9",
-    ratio_all >= 0.9 & ratio_all <= 0.95 ~ "0.9-0.95",ratio_all > 0.95 & ratio_all < 1.05  ~ "≈ 1.0",
-    ratio_all >= 1.05 & ratio_all <= 1.1 ~ "1.05-1.1",ratio_all > 1.1 ~ "> 1.1"),
-    ratio_class = factor(ratio_class, 
-          levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1"))) %>%
-  mutate(ratio_class_tembakau = case_when(
-    is.na(ratio_tembakau) ~ "Tidak tersedia",ratio_tembakau < 0.9 ~ "< 0.9",
-    ratio_tembakau >= 0.9 & ratio_tembakau <= 0.95 ~ "0.9-0.95",ratio_tembakau > 0.95 & ratio_tembakau < 1.05  ~ "≈ 1.0",
-    ratio_tembakau >= 1.05 & ratio_tembakau <= 1.1 ~ "1.05-1.1",ratio_tembakau > 1.1 ~ "> 1.1"),
-    ratio_class = factor(ratio_class, 
-                         levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1"))) %>%
-  mutate(ratio_class_elektrik = case_when(
-    is.na(ratio_elektrik) ~ "Tidak tersedia",ratio_elektrik < 0.9 ~ "< 0.9",
-    ratio_elektrik >= 0.9 & ratio_elektrik <= 0.95 ~ "0.9-0.95",ratio_elektrik > 0.95 & ratio_elektrik < 1.05  ~ "≈ 1.0",
-    ratio_elektrik >= 1.05 & ratio_elektrik <= 1.1 ~ "1.05-1.1",ratio_elektrik > 1.1 ~ "> 1.1"),
-    ratio_class = factor(ratio_class, 
-                         levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1")))
-
-map1_wshp <- id_shp %>% left_join(., map1_prev,by=c("kodeprov"))
-
-plot_ratio <- ggplot() +
-  # peta utama
-  geom_sf(data  = map1_wshp,aes(fill = ratio_class_elektrik),
-          color = NA,size  = 0.2) +
-  # north arrow
-  annotation_north_arrow(
-    location = "tr",which_north = "true",style = north_arrow_fancy_orienteering,
-    height = unit(1.2, "cm"),width  = unit(1.2, "cm")) +
-  # palet warna halus & kontras
-  scale_fill_manual(
-    values = c(
-      "Tidak tersedia"   = "lightgray",
-      "< 0.9" = "#BF0413",
-      "0.9-0.95" = "#736E6C",
-      "≈ 1.0" = "#D9D9DB",
-      "1.05-1.1"  = "#0CB1F2",
-      "> 1.1" = "#2E2C73"
-    ),na.value = "lightgray") +
-  # judul & keterangan
-  labs(
-    title    = "Peta Rasio Prevalensi Merokok Elektrik",
-    subtitle = "rasio SUSENAS/SKI",
-    caption  = paste0(
-      "Interpretasi:\n",
-      "- Rasio < 1  : prevalensi SUSENAS < SKI\n",
-      "- Rasio = 1  : prevalensi relatif setara (+- 10%)\n",
-      "- Rasio > 1  : prevalensi SUSENAS > SKI\n",
-      "Sumber: SUSENAS & SKI (diolah)")) +
-  # tema aesthetic
-  theme_minimal(base_size = 8) +
-  theme(
-    axis.text       = element_blank(),
-    axis.ticks     = element_blank(),
-    axis.title     = element_blank(),
-    panel.grid     = element_blank(),
-    legend.title   = element_blank(),
-    legend.position = "bottom",
-    legend.direction = "horizontal",
-    plot.title     = element_text(face = "bold", size = 12),
-    plot.subtitle  = element_text(size = 10, color = "gray40"),
-    plot.caption   = element_text(face = "italic", hjust = 0)
+make_ratio_map <- function(
+    agr,
+    id_shp,
+    usia_group_filter = NULL,
+    map_type = c("all", "tembakau", "elektrik"),
+    map_title = "Peta Rasio Prevalensi",
+    map_subtitle = "rasio SUSENAS/SKI"
+) {
+  
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(sf)
+  library(ggspatial)
+  
+  map_type <- match.arg(map_type)
+  
+  ## 1. filter usia_group (opsional)
+  if (!is.null(usia_group_filter)) {
+    agr <- agr %>% filter(usia_group %in% usia_group_filter)
+  }
+  
+  ## 2. hitung prevalensi & rasio
+  map_prev <- agr %>%
+    group_by(source, kodeprov) %>% 
+    summarise(
+      tot_pop        = sum(pop, na.rm = TRUE),
+      tot_rokok      = sum(rokok_all, na.rm = TRUE),
+      tot_tembakau   = sum(rokok_tembakau, na.rm = TRUE),
+      tot_elektrik   = sum(rokok_elektrik, na.rm = TRUE),
+      .groups = "drop"
+    ) %>% 
+    mutate(
+      prev_all        = tot_rokok / tot_pop,
+      prev_tembakau   = tot_tembakau / tot_pop,
+      prev_elektrik   = tot_elektrik / tot_pop
+    ) %>% 
+    pivot_wider(
+      names_from  = source,
+      values_from = c(prev_all, prev_tembakau, prev_elektrik)
+    ) %>%
+    group_by(kodeprov) %>%
+    summarise(across(everything(), ~ first(na.omit(.x))), .groups = "drop") %>%
+    mutate(
+      ratio_all       = prev_all_SUSENAS / prev_all_SKI,
+      ratio_tembakau  = prev_tembakau_SUSENAS / prev_tembakau_SKI,
+      ratio_elektrik  = prev_elektrik_SUSENAS / prev_elektrik_SKI
+    )
+  
+  ## 3. klasifikasi rasio
+  classify_ratio <- function(x) {
+    factor(
+      case_when(
+        is.na(x)              ~ "Tidak tersedia",
+        x < 0.9               ~ "< 0.9",
+        x >= 0.9 & x <= 0.95  ~ "0.9-0.95",
+        x > 0.95 & x < 1.05   ~ "≈ 1.0",
+        x >= 1.05 & x <= 1.1  ~ "1.05-1.1",
+        x > 1.1               ~ "> 1.1"
+      ),
+      levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1")
+    )
+  }
+  
+  map_prev <- map_prev %>%
+    mutate(
+      ratio_class_all       = classify_ratio(ratio_all),
+      ratio_class_tembakau  = classify_ratio(ratio_tembakau),
+      ratio_class_elektrik  = classify_ratio(ratio_elektrik)
+    )
+  
+  ## 4. pilih variabel sesuai map_type
+  fill_var <- switch(
+    map_type,
+    all        = "ratio_class_all",
+    tembakau  = "ratio_class_tembakau",
+    elektrik  = "ratio_class_elektrik"
   )
+  
+  ## 5. gabung shapefile
+  map_wshp <- id_shp %>% left_join(map_prev, by = "kodeprov")
+  
+  ## 6. plot
+  ggplot() +
+    geom_sf(
+      data  = map_wshp,
+      aes(fill = .data[[fill_var]]),
+      color = NA,
+      size  = 0.2
+    ) +
+    annotation_north_arrow(
+      location = "tr",
+      which_north = "true",
+      style = north_arrow_fancy_orienteering,
+      height = unit(1.2, "cm"),
+      width  = unit(1.2, "cm")
+    ) +
+    scale_fill_manual(
+      values = c(
+        "Tidak tersedia" = "lightgray",
+        "< 0.9"          = "#BF0413",
+        "0.9-0.95"       = "#736E6C",
+        "≈ 1.0"          = "#D9D9DB",
+        "1.05-1.1"       = "#0CB1F2",
+        "> 1.1"          = "#2E2C73"
+      ),
+      na.value = "lightgray"
+    ) +
+    labs(
+      title    = map_title,
+      subtitle = map_subtitle,
+      caption  = paste0(
+        "Interpretasi:\n",
+        "- Rasio < 1  : prevalensi SUSENAS < SKI\n",
+        "- Rasio ≈ 1  : prevalensi relatif setara (+-5%)\n",
+        "- Rasio > 1  : prevalensi SUSENAS > SKI\n",
+        "Sumber: SUSENAS & SKI (diolah)"
+      )
+    ) +
+    theme_minimal(base_size = 8) +
+    theme(
+      axis.text        = element_blank(),
+      axis.ticks       = element_blank(),
+      axis.title       = element_blank(),
+      panel.grid       = element_blank(),
+      legend.title     = element_blank(),
+      legend.position  = "bottom",
+      legend.direction = "horizontal",
+      plot.title       = element_text(face = "bold", size = 12),
+      plot.subtitle    = element_text(size = 10, color = "gray40"),
+      plot.caption     = element_text(face = "italic", hjust = 0)
+    )
+}
 
-plot_ratio
+## 1. Rasio prevalensi merokok
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  map_type   = "all",
+  map_title  = "Peta Rasio Prevalensi Merokok",
+  map_subtitle = "SUSENAS/SKI")
+
+ggsave("Output/map-merokok-all.png",get_last_plot())
+
+## 1.1. Rasio prevalensi merokok usia 10-18
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("10-18"),
+  map_type   = "all",
+  map_title  = "Peta Rasio Prevalensi Merokok Usia 10-18",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-merokok-10-18.png",get_last_plot())
+
+## 1.2. Rasio prevalensi merokok usia 26-30
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("26-30"),
+  map_type   = "all",
+  map_title  = "Peta Rasio Prevalensi Merokok Usia 26-30",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-merokok-26-30.png",get_last_plot())
+
+## 2. Rasio prevalensi rokok tembakau
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  map_type   = "tembakau",
+  map_title  = "Peta Rasio Prevalensi Merokok Tembakau",
+  map_subtitle = "SUSENAS/SKI")
+
+ggsave("Output/map-tembakau-all.png",get_last_plot())
+
+## 2.1. Rasio prevalensi rokok tembakau usia 10-18
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("10-18"),
+  map_type   = "tembakau",
+  map_title  = "Peta Rasio Prevalensi Merokok Tembakau Usia 10-18",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-tembakau-10-18.png",get_last_plot())
+
+## 2.2. Rasio prevalensi rokok tembakau usia 26-30
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("26-30"),
+  map_type   = "tembakau",
+  map_title  = "Peta Rasio Prevalensi Merokok Tembakau Usia 26-30",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-tembakau-26-30.png",get_last_plot())
+
+
+## 3. Rasio prevalensi rokok elektrik
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  map_type   = "elektrik",
+  map_title  = "Peta Rasio Prevalensi Merokok Elektrik",
+  map_subtitle = "SUSENAS/SKI")
+
+ggsave("Output/map-elektrik-all.png",get_last_plot())
+
+## 2.1. Rasio prevalensi merokok elektrik usia 10-18
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("10-18"),
+  map_type   = "elektrik",
+  map_title  = "Peta Rasio Prevalensi Merokok Elektrik Usia 10-18",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-elektrik-10-18.png",get_last_plot())
+
+## 2.2. Rasio prevalensi merokok elektrik usia 26-30
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("26-30"),
+  map_type   = "elektrik",
+  map_title  = "Peta Rasio Prevalensi Merokok Elektrik Usia 26-30",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-elektrik-26-30.png",get_last_plot())
+
 
 
 # 4) distribusi prevalensi perokok berdasarkan usia
@@ -215,7 +373,7 @@ dat_ratio <- agr %>%
   mutate(prev_all = rokok_all / tot_pop,
          prev_tembakau = rokok_tembakau / tot_pop,
          prev_elektrik = rokok_elektrik / tot_pop) %>%
-  select(source, usia, tot_pop, starts_with("prev_")) %>%   # ⬅️ JANGAN BUANG tot_pop
+  select(source, usia, tot_pop, starts_with("prev_")) %>% 
   pivot_longer(
     starts_with("prev_"),
     names_to = "jenis",
@@ -256,3 +414,5 @@ p_tembakau <- plot_ratio(dat_ratio %>% filter(jenis == "prev_tembakau"),"Rasio %
 p_elektrik <- plot_ratio(dat_ratio %>% filter(jenis == "prev_elektrik"),"Rasio %Rokok Elektrik")
 
 p_all | p_tembakau | p_elektrik
+
+ggsave("Output/rasio-by-age.png",get_last_plot())
