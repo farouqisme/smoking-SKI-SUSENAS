@@ -11,6 +11,7 @@ gen str2 r102_str = string(R102, "%02.0f")
 
 * Gabungkan menjadi kode kabupaten/kota
 gen str4 kodewil = r101_str + r102_str
+clonevar kodeprov = r101_str
 
 ** Urban/Rural
 clonevar urban = R105 
@@ -46,7 +47,7 @@ gen rokok_all = 0
 gen pop = 1
 	
 ** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil)
+collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil kodeprov)
 
 ** id
 gen source = 1
@@ -62,6 +63,7 @@ gen str2 b1r2_str = string(B1R2, "%02.0f")
 
 * Gabungkan menjadi kode kabupaten/kota
 gen str4 kodewil = b1r1_str + b1r2_str
+clonevar kodeprov = b1r1_str
 
 ** Urban/Rural
 clonevar urban = B1R5 
@@ -97,12 +99,17 @@ gen rokok_elektrik = 0
 gen pop = 1
 
 ** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil)
+collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil kodeprov)
 
 ** id
 gen source = 2
 
 save "D:\smoking-SKI-SUSENAS\Data\SKI_PREV.dta", replace
+
+merge m:1 kodeprov using "D:\smoking-SKI-SUSENAS\Data\Kode Relasi BPS (prov).dta"
+
+drop _merge kodeprov
+rename kodeprov_pre2022 kodeprov
 
 append using "D:\smoking-SKI-SUSENAS\Data\SUSENAS_PREV.dta"
 
