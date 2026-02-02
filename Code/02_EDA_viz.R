@@ -14,10 +14,17 @@ library(rio)
 library(ggplot2)
 library(scales)
 library(patchwork)
+library(sf)
+library(ggspatial)
+library(grid)
+
 
 
 #--> Import Data
 agr <- rio::import("Data/SUSENAS_SKI_AGR.dta")
+id_shp <- sf::st_read("C:/Users/ASUS/OneDrive/DATASET BUAT OLAH-OLAH/idn_adm_bps_20200401_shp/idn_admbnda_adm1_bps_20200401.shp")
+
+id_shp <- id_shp %>% mutate(kodeprov = substr(ADM1_PCODE,3,nchar(ADM1_PCODE))) %>% dplyr::select(., c(kodeprov))
 
 #--> Labeling
 ## Age group
@@ -35,11 +42,11 @@ agr <- agr %>%
          jenis_kelamin = factor(jenis_kelamin,levels = c(1,2),labels = c("Laki-laki","Perempuan")))
 
 ## region
-agr <- agr %>% mutate(prov = substr(kodewil,1,2), island = case_when(
-  prov %in% c(10:30) ~ "Sumatera", prov %in% c(31:40) ~ "Jawa",
-  prov %in% c(51:60) ~ "Bali-Nusra", prov %in% c(61:70) ~ "Kalimantan",
-  prov %in% c(71:80) ~ "Sulawesi", prov %in% c(81:90) ~ "Maluku",
-  prov %in% c(91:99) ~ "Papua")) %>% rename(kab = kodewil)
+agr <- agr %>% mutate(kodeprov, island = case_when(
+  kodeprov %in% c(10:30) ~ "Sumatera", kodeprov %in% c(31:40) ~ "Jawa",
+  kodeprov %in% c(51:60) ~ "Bali-Nusra", kodeprov %in% c(61:70) ~ "Kalimantan",
+  kodeprov %in% c(71:80) ~ "Sulawesi", kodeprov %in% c(81:90) ~ "Maluku",
+  kodeprov %in% c(91:99) ~ "Papua")) %>% rename(kab = kodewil)
 
 
 # 1) distribusi penduduk antar kabupaten kota
@@ -107,7 +114,7 @@ ggplot(dat_dual, aes(x = usia)) +
 agr %>%
   group_by(source, kab) %>% 
   summarise(tot_pop = sum(pop, na.rm = TRUE),
-            tot_rokok = sum(rokok_tembakau, na.rm = T), .groups = "drop") %>% 
+            tot_rokok = sum(rokok_all, na.rm = T), .groups = "drop") %>% 
   ggplot(aes(x = tot_rokok/tot_pop, fill = source, group = source)) +
   geom_density(alpha = 0.3, adjust = 1) +
   labs(
@@ -117,43 +124,110 @@ agr %>%
   ) +
   theme_minimal()
 
+map1_prev <- agr %>%
+  group_by(source, kodeprov) %>% 
+  summarise(tot_pop = sum(pop, na.rm = TRUE),tot_rokok = sum(rokok_all, na.rm = TRUE),
+            tot_tembakau = sum(rokok_tembakau, na.rm = TRUE), tot_elektrik = sum(rokok_elektrik, na.rm = TRUE),.groups = "drop") %>% 
+  mutate(prev_all = tot_rokok / tot_pop, prev_tembakau = tot_tembakau / tot_pop, prev_elektrik = tot_elektrik / tot_pop) %>% 
+  pivot_wider(names_from  = source, values_from = c(prev_all, prev_tembakau, prev_elektrik)) %>%
+  group_by(kodeprov) %>%
+  summarise(across(everything(), ~ first(na.omit(.x))))
+
+map1_prev <- map1_prev %>% mutate(ratio_all = prev_all_SUSENAS/prev_all_SKI, ratio_tembakau = prev_tembakau_SUSENAS/prev_tembakau_SKI,
+                                  ratio_elektrik = prev_elektrik_SUSENAS/prev_elektrik_SKI)
+
+map1_prev <- map1_prev %>%
+  mutate(ratio_class = case_when(
+    is.na(ratio_all) ~ "Tidak tersedia",ratio_all < 0.9 ~ "< 0.9",
+    ratio_all >= 0.9 & ratio_all <= 0.95 ~ "0.9-0.95",ratio_all > 0.95 & ratio_all < 1.05  ~ "≈ 1.0",
+    ratio_all >= 1.05 & ratio_all <= 1.1 ~ "1.05-1.1",ratio_all > 1.1 ~ "> 1.1"),
+    ratio_class = factor(ratio_class, 
+          levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1"))) %>%
+  mutate(ratio_class_tembakau = case_when(
+    is.na(ratio_tembakau) ~ "Tidak tersedia",ratio_tembakau < 0.9 ~ "< 0.9",
+    ratio_tembakau >= 0.9 & ratio_tembakau <= 0.95 ~ "0.9-0.95",ratio_tembakau > 0.95 & ratio_tembakau < 1.05  ~ "≈ 1.0",
+    ratio_tembakau >= 1.05 & ratio_tembakau <= 1.1 ~ "1.05-1.1",ratio_tembakau > 1.1 ~ "> 1.1"),
+    ratio_class = factor(ratio_class, 
+                         levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1"))) %>%
+  mutate(ratio_class_elektrik = case_when(
+    is.na(ratio_elektrik) ~ "Tidak tersedia",ratio_elektrik < 0.9 ~ "< 0.9",
+    ratio_elektrik >= 0.9 & ratio_elektrik <= 0.95 ~ "0.9-0.95",ratio_elektrik > 0.95 & ratio_elektrik < 1.05  ~ "≈ 1.0",
+    ratio_elektrik >= 1.05 & ratio_elektrik <= 1.1 ~ "1.05-1.1",ratio_elektrik > 1.1 ~ "> 1.1"),
+    ratio_class = factor(ratio_class, 
+                         levels = c("Tidak tersedia","< 0.9","0.9-0.95","≈ 1.0","1.05-1.1","> 1.1")))
+
+map1_wshp <- id_shp %>% left_join(., map1_prev,by=c("kodeprov"))
+
+plot_ratio <- ggplot() +
+  # peta utama
+  geom_sf(data  = map1_wshp,aes(fill = ratio_class_elektrik),
+          color = NA,size  = 0.2) +
+  # north arrow
+  annotation_north_arrow(
+    location = "tr",which_north = "true",style = north_arrow_fancy_orienteering,
+    height = unit(1.2, "cm"),width  = unit(1.2, "cm")) +
+  # palet warna halus & kontras
+  scale_fill_manual(
+    values = c(
+      "Tidak tersedia"   = "lightgray",
+      "< 0.9" = "#BF0413",
+      "0.9-0.95" = "#736E6C",
+      "≈ 1.0" = "#D9D9DB",
+      "1.05-1.1"  = "#0CB1F2",
+      "> 1.1" = "#2E2C73"
+    ),na.value = "lightgray") +
+  # judul & keterangan
+  labs(
+    title    = "Peta Rasio Prevalensi Merokok Elektrik",
+    subtitle = "rasio SUSENAS/SKI",
+    caption  = paste0(
+      "Interpretasi:\n",
+      "- Rasio < 1  : prevalensi SUSENAS < SKI\n",
+      "- Rasio = 1  : prevalensi relatif setara (+- 10%)\n",
+      "- Rasio > 1  : prevalensi SUSENAS > SKI\n",
+      "Sumber: SUSENAS & SKI (diolah)")) +
+  # tema aesthetic
+  theme_minimal(base_size = 8) +
+  theme(
+    axis.text       = element_blank(),
+    axis.ticks     = element_blank(),
+    axis.title     = element_blank(),
+    panel.grid     = element_blank(),
+    legend.title   = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    plot.title     = element_text(face = "bold", size = 12),
+    plot.subtitle  = element_text(size = 10, color = "gray40"),
+    plot.caption   = element_text(face = "italic", hjust = 0)
+  )
+
+plot_ratio
+
+
 # 4) distribusi prevalensi perokok berdasarkan usia
 dat_ratio <- agr %>%
   group_by(source, usia) %>%
-  summarise(
-    tot_pop = sum(pop, na.rm = TRUE),
-    rokok_all = sum(rokok_all, na.rm = TRUE),
-    rokok_tembakau = sum(rokok_tembakau, na.rm = TRUE),
-    rokok_elektrik = sum(rokok_elektrik, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    prev_all = rokok_all / tot_pop,
-    prev_tembakau = rokok_tembakau / tot_pop,
-    prev_elektrik = rokok_elektrik / tot_pop
-  ) %>%
+  summarise(tot_pop = sum(pop, na.rm = TRUE),
+            rokok_all = sum(rokok_all, na.rm = TRUE),
+            rokok_tembakau = sum(rokok_tembakau, na.rm = TRUE),
+            rokok_elektrik = sum(rokok_elektrik, na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(prev_all = rokok_all / tot_pop,
+         prev_tembakau = rokok_tembakau / tot_pop,
+         prev_elektrik = rokok_elektrik / tot_pop) %>%
   select(source, usia, tot_pop, starts_with("prev_")) %>%   # ⬅️ JANGAN BUANG tot_pop
   pivot_longer(
     starts_with("prev_"),
     names_to = "jenis",
     values_to = "prev"
-  ) %>%
-  pivot_wider(
-    names_from  = source,
-    values_from = c(prev, tot_pop),
-    names_sep   = "_"
-  ) %>%
-  mutate(
-    ratio = prev_SUSENAS/prev_SKI,
-    
-    se_ratio = ratio * sqrt(
-      (1 - prev_SUSENAS) / (prev_SUSENAS * tot_pop_SUSENAS) +
-        (1 - prev_SKI)     / (prev_SKI     * tot_pop_SKI)
-    ),
-    
+  ) %>% pivot_wider(names_from  = source,
+                    values_from = c(prev, tot_pop),
+                    names_sep   = "_") %>%
+  mutate(ratio = prev_SUSENAS/prev_SKI,
+         se_ratio = ratio * sqrt((1 - prev_SUSENAS) / (prev_SUSENAS * tot_pop_SUSENAS) +
+                                   (1 - prev_SKI)     / (prev_SKI     * tot_pop_SKI)),
     ratio_l = ratio - 1.96 * se_ratio,
-    ratio_u = ratio + 1.96 * se_ratio
-  )
+    ratio_u = ratio + 1.96 * se_ratio)
 
 
 plot_ratio <- function(data, judul, ylim_use = NULL) {
@@ -177,19 +251,8 @@ plot_ratio <- function(data, judul, ylim_use = NULL) {
 }
 
 
-p_all <- plot_ratio(
-  dat_ratio %>% filter(jenis == "prev_all"),
-  "Rasio %Merokok"
-)
-
-p_tembakau <- plot_ratio(
-  dat_ratio %>% filter(jenis == "prev_tembakau"),
-  "Rasio %Rokok Tembakau"
-)
-
-p_elektrik <- plot_ratio(
-  dat_ratio %>% filter(jenis == "prev_elektrik"),
-  "Rasio %Rokok Elektrik"
-)
+p_all <- plot_ratio(dat_ratio %>% filter(jenis == "prev_all"),"Rasio %Merokok")
+p_tembakau <- plot_ratio(dat_ratio %>% filter(jenis == "prev_tembakau"),"Rasio %Rokok Tembakau")
+p_elektrik <- plot_ratio(dat_ratio %>% filter(jenis == "prev_elektrik"),"Rasio %Rokok Elektrik")
 
 p_all | p_tembakau | p_elektrik

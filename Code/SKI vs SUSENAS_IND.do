@@ -1,6 +1,14 @@
 clear
 set more off
 
+**---Kode Relasi--**
+import excel "D:\smoking-SKI-SUSENAS\Data\Kode Relasi BPS (prov).xlsx", firstrow clear
+
+tostring kodeprov, replace format(%04.0f)
+
+save "D:\smoking-SKI-SUSENAS\Data\Kode Relasi BPS (prov).dta", replace
+
+
 **---SUSENAS 2023--**
 
 use "C:\Users\ASUS\OneDrive\DATASET BUAT OLAH-OLAH\BPS\Susenas\Susenas Maret 2023 - KOR\kor23_ind_1.dta", replace
@@ -11,6 +19,7 @@ gen str2 r102_str = string(R102, "%02.0f")
 
 * Gabungkan menjadi kode kabupaten/kota
 gen str4 kodewil = r101_str + r102_str
+clonevar kodeprov = r101_str
 
 ** Urban/Rural
 clonevar urban = R105 
@@ -51,7 +60,7 @@ gen pop = 1
 gen source = 1
 
 ** keep important data
-keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
+keep kodeprov kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
 save "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_PREV.dta", replace
 
@@ -64,6 +73,7 @@ gen str2 b1r2_str = string(B1R2, "%02.0f")
 
 * Gabungkan menjadi kode kabupaten/kota
 gen str4 kodewil = b1r1_str + b1r2_str
+clonevar kodeprov = b1r1_str
 
 ** Urban/Rural
 clonevar urban = B1R5 
@@ -104,10 +114,14 @@ gen pop = 1
 gen source = 2
 
 ** keep important data
-keep kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
-
+keep kodeprov kodewil kode_RT FWT_int urban jenis_kelamin rokok_tembakau rokok_elektrik rokok_all pop source
 
 save "D:\smoking-SKI-SUSENAS\Data\IND_SKI_PREV.dta", replace
+
+merge m:1 kodeprov using "D:\smoking-SKI-SUSENAS\Data\Kode Relasi BPS (prov).dta"
+
+drop _merge kodeprov
+rename kodeprov_pre2022 kodeprov
 
 append using "D:\smoking-SKI-SUSENAS\Data\IND_SUSENAS_PREV.dta"
 
