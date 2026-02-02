@@ -100,12 +100,12 @@ bysort IDRT: gen hitung_rt = (_n == 1)
 clonevar kode_RT = IDRT
 destring kode_RT, replace
 ** Rokok
-gen rokok_all = 0
-	replace rokok_all = 1 if inlist(G16, 1, 2)
 gen rokok_tembakau = 0
-	replace rokok_tembakau = 1 if rokok_all == 1 & (G14A == 1 | G14B == 1 | G14C == 3 | G14E == 4)
+	replace rokok_tembakau = 1 if G14A == 1 | G14B == 1 | G14C == 1 | G14E == 1
 gen rokok_elektrik = 0
-	replace rokok_elektrik = 1 if rokok_all == 1 & (G14D == 1)
+	replace rokok_elektrik = 1 if G14D == 1
+gen rokok_all = 0
+	replace rokok_all = 1 if rokok_tembakau == 1| rokok_elektrik == 1
 
 ** pop
 gen pop = 1

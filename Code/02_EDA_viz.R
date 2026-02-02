@@ -295,6 +295,19 @@ make_ratio_map(
 
 ggsave("Output/map-merokok-26-30.png",get_last_plot())
 
+## 1.3. Rasio prevalensi merokok usia 26-30
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("51-55"),
+  map_type   = "all",
+  map_title  = "Peta Rasio Prevalensi Merokok Usia 51-55",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-merokok-51-55.png",get_last_plot())
+
+
+
 ## 2. Rasio prevalensi rokok tembakau
 make_ratio_map(
   agr        = agr,
@@ -327,6 +340,16 @@ make_ratio_map(
 
 ggsave("Output/map-tembakau-26-30.png",get_last_plot())
 
+## 2.3. Rasio prevalensi rokok tembakau usia 51-55
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("51-55"),
+  map_type   = "tembakau",
+  map_title  = "Peta Rasio Prevalensi Merokok Tembakau Usia 51-55",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-tembakau-51-55.png",get_last_plot())
 
 ## 3. Rasio prevalensi rokok elektrik
 make_ratio_map(
@@ -359,6 +382,17 @@ make_ratio_map(
   map_subtitle = "Rasio SUSENAS terhadap SKI")
 
 ggsave("Output/map-elektrik-26-30.png",get_last_plot())
+
+## 2.3. Rasio prevalensi merokok elektrik usia 51-55
+make_ratio_map(
+  agr        = agr,
+  id_shp     = id_shp,
+  usia_group_filter = c("51-55"),
+  map_type   = "elektrik",
+  map_title  = "Peta Rasio Prevalensi Merokok Elektrik Usia 51-55",
+  map_subtitle = "Rasio SUSENAS terhadap SKI")
+
+ggsave("Output/map-elektrik-51-55.png",get_last_plot())
 
 
 
