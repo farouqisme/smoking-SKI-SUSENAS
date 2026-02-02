@@ -124,6 +124,23 @@ agr %>% group_by(source, island) %>%
     Selisih = percent(diff_pct, accuracy = 0.01)) %>% 
   select(island, SUSENAS, SKI, Selisih) %>% gt(rowname_col = "island",auto_align = FALSE)
 
+#--> Viz 5: (POP) islands age (young)
+agr %>% filter(usia_group == "10-18") %>% group_by(source, island) %>%
+  summarise(total_pop = sum(pop, na.rm = TRUE),.groups = "drop") %>%
+  group_by(source) %>%
+  mutate(pct = total_pop / sum(total_pop)) %>%
+  ungroup() %>%
+  pivot_wider(names_from  = source,values_from = c(total_pop, pct),names_sep   = "_") %>%
+  mutate(diff_pct = pct_SUSENAS - pct_SKI) %>% 
+  mutate(
+    SUSENAS = paste0(number(total_pop_SUSENAS, big.mark=".", decimal.mark=","),
+                     " (", percent(pct_SUSENAS, accuracy = 0.01), ")"),
+    SKI = paste0(number(total_pop_SKI, big.mark=".", decimal.mark=","),
+                 " (", percent(pct_SKI, accuracy = 0.01), ")"),
+    Selisih = percent(diff_pct, accuracy = 0.01)) %>% 
+  select(island, SUSENAS, SKI, Selisih) %>% gt(rowname_col = "island",auto_align = FALSE)
+
+
 #--> Viz 6: (POP) sex
 agr %>% group_by(source, jenis_kelamin) %>%
   summarise(total_pop = sum(pop, na.rm = TRUE),.groups = "drop") %>%
