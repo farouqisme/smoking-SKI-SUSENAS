@@ -20,7 +20,7 @@ label define urb 1 "Urban" 0 "Rural"
 label values urban urb
 
 ** Jenis Kelamin
-clonevar jenis_kelamin = R506 
+clonevar jenis_kelamin = R405 
 label define lab_jk 1 "Laki-laki" 2 "Perempuan"
 
 drop if jenis_kelamin > 2
