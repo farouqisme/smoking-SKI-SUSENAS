@@ -11,6 +11,5 @@
 
 # Raw Data
 data/*.dta
+data/dasar perhitungan konkordansi BPS-SUSENAS.xlsx
 
-# Rscript
-data/*.do
