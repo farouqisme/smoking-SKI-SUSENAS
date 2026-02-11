@@ -53,6 +53,7 @@ susenas <- agr %>% filter(source == "SUSENAS")
 
 agr_matched_code <- bind_rows(susenas,ski)
 
+rio::export(agr_matched_code,"Data/merokok agregat susenas-ski.csv")
 
 ## region
 agr <- agr_matched_code %>% mutate(island = case_when(
