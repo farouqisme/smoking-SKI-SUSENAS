@@ -68,6 +68,8 @@ comp_grid_agr <- comp_grid_agr %>%
          sus_ski_rat = susenas_perc/ski_perc,
          sus_ski_dev = susenas_perc - ski_perc)
 
+rio::export(comp_grid_agr,"Data/rasio keterlengkapan.csv")
+
 dat_for_map <- left_join(id_shp,comp_grid_agr,by=c("kodewil_susenaspre2022")) %>% filter(!is.na(total_cat))
 
 #--> dataviz
