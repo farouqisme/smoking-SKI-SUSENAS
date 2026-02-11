@@ -138,5 +138,5 @@ dev_bAG <- read_docx() %>%
   body_add_par("", style = "Normal") %>%
   body_add_flextable(oAG_est)
 
-
+# -> Export files
 print(dev_bAG, target = "Output/deviasi-sus-ski-dev-kabkota.docx")
