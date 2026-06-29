@@ -1,27 +1,111 @@
+# Analisis Distribusi Perokok: SUSENAS vs SKI
 
-# Identifying Differences in Distribution Between SKI (Riskesdas) 2023 and Susenas 2023 survey data
-This repository contains a comprehensive analysis utilising Data Exploratory Analysis and Inferential Statistics to investigate differences between the two datasets, especially in the case of smoking prevalence. Based on the analysis, several key points were identified as follows:
+Repositori ini berisi seluruh kode analisis untuk studi perbandingan distribusi perokok antara **SUSENAS** (Badan Pusat Statistik) dan **SKI** (Kementerian Kesehatan), serta analisis tren prevalensi perokok tembakau **2015–2024** menggunakan SUSENAS.
 
-## Population
+Laporan lengkap tersedia melalui tautan yang dicantumkan dalam dokumen resmi proyek.
 
-1) RISKESDAS underwent sampling design changes across RISKESDAS 2013, RISKESDAS 2018, and SKI 2023. The main changes are evident in stratification and the integration of the survey with other surveys, such as SUSENAS, SSGI, biomedical, and oral health surveys.
+---
 
-2) In aggregate and across categories, there is no significant difference in the population aged 10–75 years between SKI and SUSENAS.
+## Latar Belakang
 
-3) There are differences in population distribution by age group. SKI tends to capture a larger share of the younger age range, while SUSENAS dominates among older age groups.
+Prevalensi perokok antara SUSENAS 2023 dan SKI 2023 menunjukkan perbedaan yang signifikan, terutama pada kelompok usia muda (10–18 tahun) dan usia dewasa-tua (>40 tahun). Perbedaan ini berpotensi muncul akibat perbedaan desain sampling antara kedua survei. Di sisi lain, penggunaan dua data yang berbeda di berbagai instansi pemerintah — Kemenpora menggunakan SUSENAS untuk Indeks Pembangunan Pemuda, sementara Kemenkes menggunakan SKI untuk renstra — membuat harmonisasi data menjadi krusial untuk keperluan advokasi pengendalian tembakau.
 
-4) Neither data source consistently captures all demographic groups at the district/city level. However, SUSENAS performs better in capturing this diversity.
+---
 
-## Smoking Prevalence
+## Pertanyaan Penelitian
 
-1) Smoking prevalence and tobacco smoker rates are higher in SKI compared to SUSENAS. Individuals observed in SKI have at least 1.13 times higher probability of being classified as smokers. However, the opposite is observed for e-cigarette smokers (SKI is 0.49 times lower).
+1. Apakah terdapat perbedaan distribusi populasi antara data SUSENAS dan SKI pada beragam kategori demografi?
+2. Apakah terdapat perbedaan signifikan antara prevalensi perokok, perokok tembakau, dan perokok elektrik pada data SUSENAS dan SKI? Apa faktor determinan yang memengaruhi perbedaan tersebut?
 
-2) In a regional context, regression estimates indicate that SKI records higher smoking and tobacco smoker prevalence in approximately 18 provinces, while SUSENAS does so in only approximately 7 provinces. SUSENAS records higher overall smoking prevalence in nearly all provinces, with the exception of DIY.
+---
 
-3) The gap in smoking and tobacco smoker prevalence between SKI and SUSENAS widens for ages below 20 and above 40, while the 20–40 age range shows prevalence rates more similar to SUSENAS. For e-cigarette smokers, the SUSENAS prevalence gap relative to SKI widens as age groups increase.
+## Data
 
-4) There are indications that these differences are attributable to differences in the sampling design of the two surveys. Several findings support this, including: the consistent influence of healthcare facility distribution on deviations in smoking and tobacco smoker prevalence, and demographic completeness playing a role in the deviation for younger age groups and e-cigarette smokers in the total sample.
+| Sumber | Tahun | Keterangan |
+|--------|-------|------------|
+| SUSENAS KOR (BPS) | 2015, 2023, 2024 | Data individu usia 10+ |
+| SKI (Kemenkes) | 2023 | Data individu usia 10–75 |
+| PODES (BPS) | 2021 | Data fasilitas kesehatan kab/kota |
 
-## Note
-Please consider these findings as initial. We are currently developing a more comprehensive analysis, and the methodology is still being refined. As such, the findings presented here are subject to change and should not yet be cited or used as reference.
-For any inquiries, please contact muhammadakmalfarouqi@gmail.com
+> **Catatan:** File data mentah (`.dta`, `.csv`) tidak disimpan di repositori karena ukurannya melebihi 10 MB. Jalur impor data perlu disesuaikan pada baris `import` di masing-masing script.
+
+---
+
+## Struktur Folder
+
+```
+smoking-SKI-SUSENAS/
+├── Code/          # Script R dan Stata, bernomor sesuai urutan analisis
+├── Data/          # File data olahan (file mentah di-ignore)
+├── Output/        # Visualisasi (PNG) dan tabel hasil (XLSX, DOCX)
+└── README.md
+```
+
+### Deskripsi Script (Code/)
+
+| Script | Bahasa | Fungsi |
+|--------|--------|--------|
+| `01_EDA_table.R` | R | Tabel deskriptif distribusi populasi dan perokok |
+| `01_data level individu.do` | Stata | Persiapan data tingkat individu |
+| `01_data level region.do` | Stata | Persiapan data tingkat wilayah |
+| `02_EDA_map.R` | R | Peta rasio prevalensi SUSENAS vs SKI per kab/kota |
+| `02_EDA_viz.R` | R | Visualisasi EDA distribusi perokok |
+| `02_data populasi untuk komparasi.do` | Stata | Data populasi komparasi |
+| `02_data proporsi balita.do` | Stata | Proporsi rumah tangga dengan balita |
+| `03a_inferential (individual).R` | R | Regresi logistik tingkat individu |
+| `03b_inferential (kabkota).R` | R | Regresi OLS tingkat kab/kota |
+| `04_sample completeness check.R` | R | Rasio kelengkapan demografi per kab/kota |
+| `05_prep podes data.R` | R | Persiapan data PODES untuk variabel kontrol |
+| `06_CI with PSU STRATA.R` | R | Estimasi prevalensi dengan CI 95% mempertimbangkan desain sampling (PSU + strata) |
+| `06_identifikasi sumber informan.do` | Stata | Identifikasi sumber responden jawaban survei |
+| `07_additional data cleaning for coalition guidance.R` | R | Data cleaning + visualisasi tren perokok tembakau 2015–2024 untuk kebutuhan advokasi |
+
+---
+
+## Cara Menjalankan
+
+**Prerequisites:** R 4.x dengan paket berikut:
+
+```r
+install.packages(c("tidyverse", "rio", "survey", "ggplot2", "sf",
+                   "patchwork", "gt", "janitor", "scales", "ggspatial"))
+```
+
+Untuk script Stata (`.do`), diperlukan Stata 14+.
+
+Jalankan script berurutan: `01` → `02` → `03` → `04` → `05` → `06` → `07`. Sesuaikan jalur impor data di baris `import` setiap script dengan direktori lokal Anda.
+
+---
+
+## Temuan Utama
+
+### Tren 2015–2024 (SUSENAS, usia 10+)
+
+| Indikator | 2015 | 2024 |
+|-----------|------|------|
+| Prevalensi perokok tembakau | 26,6% | 26,3% |
+| Jumlah perokok tembakau | ~55,4 juta | ~62,0 juta |
+| Prevalensi laki-laki | 52,1% | 51,6% |
+| Prevalensi perempuan | 1,1% | 0,9% |
+
+> Meskipun prevalensi sedikit turun, jumlah absolut perokok meningkat ~6,6 juta akibat pertumbuhan penduduk.
+
+### Perbandingan SUSENAS vs SKI 2023
+
+- Perbedaan prevalensi perokok tembakau antar survei mencapai **3,35 pp** secara nasional.
+- Perbedaan terkonsentrasi pada usia **<20 tahun** dan **>40 tahun** (pola U-terbalik).
+- SUSENAS memiliki kelengkapan demografi lebih tinggi di 303 dari 514 kab/kota; nilai minimum kelengkapan SUSENAS (54,6%) jauh di atas SKI (17,5%).
+- Hasil regresi logistik: individu SKI **1,13× lebih mungkin** terklasifikasi sebagai perokok tembakau dibanding SUSENAS (signifikan pada p < 0,05), tetapi **50% lebih rendah** untuk perokok elektrik.
+
+---
+
+## Penulis
+
+**Muhammad Akmal Farouqi**
+Center for Indonesia's Strategic Development Initiatives (CISDI)
+
+---
+
+## Lisensi
+
+MIT License © 2026 Muhammad Akmal Farouqi
