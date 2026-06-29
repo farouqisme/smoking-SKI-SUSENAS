@@ -14,12 +14,13 @@ library(rio)
 library(sf)
 library(ggspatial)
 library(grid)
+library(gt)
 
 #--> import data
 raw_data <- rio::import("Data/SUSENAS_SKI_AGR.dta")
 nmprov <- rio::import("Data/Nama Provinsi BPS (38 provinsi).xlsx") %>% mutate(kodeprov = as.character(kodeprov))
 concord <- rio::import("Data/relasi kode kabupaten susenas ski.xlsx")
-id_shp <- sf::st_read("C:/Users/ASUS/OneDrive/DATASET BUAT OLAH-OLAH/idn_adm_bps_20200401_shp/idn_admbnda_adm2_bps_20200401.shp")
+id_shp <- sf::st_read("D:/dataset/idn_adm_bps_20200401_shp/idn_admbnda_adm2_bps_20200401.shp")
 
 concord <- concord %>% mutate(kodewil_susenaspre2022 = as.character(kodewil_susenaspre2022),
                               kodewil_ski = as.character(kodewil_ski),
@@ -93,9 +94,9 @@ comp_grid_isl <- comp_grid %>% mutate(kodeprov = substr(kodewil_susenaspre2022,1
 comp_grid_isl %>% 
   mutate(SUSENAS = scales::percent(susenas_perc,accuracy = 0.01),
          SKI = scales::percent(ski_perc,accuracy = 0.01),
-         `SUSENAS/SKI` = scales::percent(sus_ski_rat,accuracy = 0.01),
-         `SUSENAS-SKI` = scales::percent(sus_ski_dev,accuracy = 0.01)) %>%
-  select(island,SUSENAS,SKI,`SUSENAS/SKI`,`SUSENAS-SKI`) %>% gt(rowname_col = "island",auto_align = FALSE)
+         `SUSENAS/SKI*` = scales::percent(sus_ski_rat,accuracy = 0.01),
+         `SUSENAS-SKI**` = scales::percent(sus_ski_dev,accuracy = 0.01)) %>%
+  select(island,SUSENAS,SKI,`SUSENAS/SKI*`,`SUSENAS-SKI**`) %>% gt(rowname_col = "island",auto_align = FALSE)
 
 # b) Jumlah kabupaten
 sum(comp_grid_agr$sus_ski_dev > 0)
@@ -168,6 +169,7 @@ ggsave("Output/rasio-kelengkapan-SKI.png",get_last_plot())
 # 3) Selisih Rasio Kelengkapan demografi data SUSENAS-SKI 
 dat_for_map %>%
   ggplot() + geom_sf(aes(fill = sus_ski_dev),color = NA,size  = 0.2) +
+  coord_sf(expand = FALSE) +
   annotation_north_arrow(location = "tr",which_north = "true",style = north_arrow_fancy_orienteering,
                          height = unit(1.2, "cm"),width  = unit(1.2, "cm")) +
   scale_fill_gradient2(
@@ -184,13 +186,92 @@ dat_for_map %>%
                         "- Terdapat pada masing-masing klasifikasi wilayah Urban/Rural\n",
                         "- Tersedia pada jenis kelamin 1) Laki-laki dan 2) Perempuan")) +
   theme_minimal(base_size = 8) +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),panel.grid = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.title.position = "top",
-        plot.title = element_text(face = "bold.italic", size = 10),
-        plot.caption = element_text(face = "italic", hjust = 0))
+  theme(
+    # --- Kode untuk menghapus background ---
+    panel.background = element_blank(),
+    plot.background = element_blank(),
+    legend.background = element_blank(),
+    plot.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "pt"),
+    # ----------------------------------------
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),panel.grid = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title.position = "top",
+    plot.title = element_text(face = "bold.italic", size = 10),
+    plot.caption = element_text(face = "italic", hjust = 0))
 
 ggsave("Output/selisih-rasio-kelengkapan.png",get_last_plot())
+
+
+
+
+
+
+
+
+
+
+
+
+
+p <- dat_for_map %>%
+  ggplot() + 
+  geom_sf(aes(fill = sus_ski_dev), color = NA, size = 0.2) +
+  coord_sf(expand = FALSE) +
+  annotation_north_arrow(
+    location = "tr", which_north = "true",
+    style = north_arrow_fancy_orienteering,
+    height = unit(1.2, "cm"), width = unit(1.2, "cm")
+  ) +
+  scale_fill_gradient2(
+    low = "#BF0413", mid = "white", high = "#2E2C73",
+    midpoint = 0, limits = c(-0.5, 0.5),
+    oob = scales::squish, na.value = "lightgray", name = "Rasio"
+  ) +
+  labs(
+    title    = "Selisih Rasio Kelengkapan Demografi (%SUSENAS - %SKI)",
+    subtitle = paste0(
+      "Min: ", percent(min(dat_for_map$sus_ski_dev), accuracy = 0.1),
+      " | Max: ", percent(max(dat_for_map$sus_ski_dev), accuracy = 0.1),
+      " | Mean: ", percent(mean(dat_for_map$sus_ski_dev), accuracy = 0.1),
+      " | Median: ", percent(median(dat_for_map$sus_ski_dev), accuracy = 0.1)
+    ),
+    caption = paste0(
+      "Kelengkapan dihitung atas ketersedianya populasi pada beberapa kelompok sebagai berikut:\n",
+      "- Rentang usia 10-75 tahun\n",
+      "- Terdapat pada masing-masing klasifikasi wilayah Urban/Rural\n",
+      "- Tersedia pada jenis kelamin 1) Laki-laki dan 2) Perempuan"
+    )
+  ) +
+  theme_minimal(base_size = 8) +
+  theme(
+    # --- Background transparan ---
+    panel.background  = element_rect(fill = "transparent", color = NA),
+    plot.background   = element_rect(fill = "transparent", color = NA),
+    legend.background = element_rect(fill = "transparent", color = NA),
+    legend.key        = element_rect(fill = "transparent", color = NA),
+    # -----------------------------
+    plot.margin  = margin(t = 4, r = 8, b = 4, l = 8, unit = "pt"),
+    axis.text    = element_blank(),
+    axis.ticks   = element_blank(),
+    axis.title   = element_blank(),
+    panel.grid   = element_blank(),
+    legend.position       = "bottom",
+    legend.direction      = "horizontal",
+    legend.title.position = "top",
+    plot.title   = element_text(face = "bold.italic", size = 10),
+    plot.caption = element_text(face = "italic", hjust = 0)
+  )
+
+# Export PNG dengan background transparan & proporsi horizontal
+ggsave(
+  filename = "peta_susenas_ski.png",
+  plot     = p,
+  width    = 16,    # lebar (cm) — sesuaikan
+  height   = 9,     # tinggi (cm) — rasio 16:9
+  units    = "cm",
+  dpi      = 300,
+  bg       = "transparent"   # ← kunci background transparan
+)

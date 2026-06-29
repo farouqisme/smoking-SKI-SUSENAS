@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
+*/.Rhistory
 
 # Session Data files
 .RData
@@ -9,7 +10,21 @@
 # RStudio files
 .Rproj.user/
 
-# Raw Data
-data/*.dta
-data/dasar perhitungan konkordansi BPS-SUSENAS.xlsx
+# Raw / large data files (not stored in repo)
+Data/*.dta
+Data/*.csv
+Data/*.xlsx
 
+# Keep small reference xlsx files explicitly
+!Data/relasi kode kabupaten susenas ski.xlsx
+!Data/Kode Relasi BPS (Kab).xlsx
+!Data/Kode Relasi BPS (Prov).xlsx
+!Data/Nama Provinsi BPS.xlsx
+!Data/Nama Provinsi BPS (38 provinsi).xlsx
+!Data/SUSENAS self fill.xlsx
+!Data/by age jk for PAF (2015).xlsx
+!Data/dasar perhitungan konkordansi.xlsx
+
+# RStudio temporary plots (root level)
+Rplot*.png
+peta_susenas_ski.png
