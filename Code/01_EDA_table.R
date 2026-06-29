@@ -1,6 +1,6 @@
 
 ###################################################################
-#####        Rscript untuk generate table analisis DEA        #####
+#####        Rscript untuk generate table analisis EDA        #####
 ###################################################################
 
 #--> Clean env.
@@ -29,6 +29,15 @@ agr <- agr %>%
                                 usia %in% c(41:45) ~ "41-45", usia %in% c(46:50) ~ "46-50",
                                 usia %in% c(51:55) ~ "51-55", usia %in% c(56:60) ~ "56-60",
                                 usia %in% c(61:65) ~ "61-65", usia > 65 ~ ">66"))
+
+agr  %>% group_by(source) %>% summarise(rokok_tembakau = sum(rokok_tembakau,na.rm = T),
+                                                                         rokok_elektrik = sum(rokok_elektrik,na.rm = T),
+                                                                         rokok_all = sum(rokok_all,na.rm = T),
+                                                                         pop = sum(pop,na.rm = T),.groups = "drop") %>% 
+  mutate(prev.rokok_tembakau = rokok_tembakau/pop,
+         prev.rokok_elektrik = rokok_elektrik/pop,
+         prev.rokok_all = rokok_all/pop)
+
 ## data source, urban/rural, sex
 agr <- agr %>%
   mutate(source = factor(source,levels = c(1, 2),labels = c("SUSENAS", "SKI")),
