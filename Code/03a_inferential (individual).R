@@ -1,6 +1,7 @@
 
 #####################################################################
 #####        Rscript untuk generate analisis inferensial        #####
+#####        data tingkat individu                              #####
 #####################################################################
 
 #--> Clean env.
@@ -186,6 +187,9 @@ m4_elektrik <- ind %>% group_by(usia) %>%
          or_u = exp(estimate + 1.96 * std.error),tipe = "Merokok Elektrik")
 
 m4 <- bind_rows(m4_all,m4_tembakau,m4_elektrik)
+sig_val <- m4 %>% filter(tipe=="Merokok") %>% mutate(sig5perc = ifelse(p.value < 0.05,1,0)) %>% 
+  dplyr::select(., c(usia,estimate,p.value))
+rio::export(sig_val,"Output/Result sig.xlsx")
 
 ggplot(m4, aes(x = usia, y = or, color = tipe, fill = tipe)) +
   geom_line(linewidth = 1) +

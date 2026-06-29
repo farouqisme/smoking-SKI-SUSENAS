@@ -47,12 +47,12 @@ gen rokok_all = 0
 gen pop = 1
 	
 ** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil kodeprov)
+collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(kodewil kodeprov)
 
 ** id
 gen source = 1
 
-save "D:\smoking-SKI-SUSENAS\Data\SUSENAS_PREV.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\SUSENAS_data klas.dta", replace
 
 **---SKI 2023--**
 use "C:\Users\ASUS\OneDrive\DATASET BUAT OLAH-OLAH\BPS\SKI 2023\CISDI\ski_INDIVIDU.dta", clear
@@ -98,22 +98,21 @@ gen rokok_all = 0
 ** pop
 gen pop = 1
 
-** collapse
-collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(urban jenis_kelamin usia kodewil kodeprov)
+collapse (sum) rokok_tembakau rokok_elektrik rokok_all pop hitung_rt [fw=FWT_int], by(kodewil kodeprov)
 
 ** id
 gen source = 2
 
-save "D:\smoking-SKI-SUSENAS\Data\SKI_PREV.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\SKI_data klas.dta", replace
 
 merge m:1 kodeprov using "D:\smoking-SKI-SUSENAS\Data\Kode Relasi BPS (prov).dta"
 
 drop _merge kodeprov
 rename kodeprov_pre2022 kodeprov
 
-append using "D:\smoking-SKI-SUSENAS\Data\SUSENAS_PREV.dta"
+append using "D:\smoking-SKI-SUSENAS\Data\SUSENAS_data klas.dta"
 
 label define src 1 "SUSENAS" 2 "SKI"
 label values source src
 
-save "D:\smoking-SKI-SUSENAS\Data\SUSENAS_SKI_AGR.dta", replace
+save "D:\smoking-SKI-SUSENAS\Data\SUSENAS_SKI_populasi kabupaten.dta", replace
