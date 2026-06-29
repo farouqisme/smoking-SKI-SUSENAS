@@ -90,11 +90,10 @@ File-file ini terlalu besar dan di-ignore via `.gitignore`. Harus tersedia lokal
 
 ## Hal yang belum / bisa dilanjutkan
 
-- [ ] **PAF (Population Attributable Fraction)** — `Data/by age jk for PAF (2015).xlsx` sudah disiapkan sebagai input, tapi script perhitungan PAF belum ada
 - [ ] **Analisis subgroup lebih lanjut** — tren 2015–2024 baru pada level nasional dan pulau besar; belum per provinsi atau urban/rural
 - [ ] **Validasi angka dengan bobot kompleks (PSU/strata)** — script 07 menggunakan weighted sum sederhana (bukan `svymean`); untuk CI yang akurat gunakan pola di script 06
 - [ ] **Visualisasi jenis kelamin × umur** — jumlah perokok laki-laki vs perempuan per usia belum divisualisasikan
-- [ ] **Update laporan Word** — `[EXT] Report SUSENAS vs SKI.docx` di folder Downloads belum diupdate dengan temuan tren 2015–2024
+
 
 ---
 
