@@ -24,7 +24,9 @@ Data/*.xlsx
 !Data/SUSENAS self fill.xlsx
 !Data/by age jk for PAF (2015).xlsx
 !Data/dasar perhitungan konkordansi.xlsx
+!Data/perokok absolut per umur 2015-2024.xlsx
 
 # RStudio temporary plots (root level)
 Rplot*.png
+Rplots.pdf
 peta_susenas_ski.png

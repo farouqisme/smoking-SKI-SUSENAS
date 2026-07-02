@@ -41,6 +41,36 @@ Seluruh pipeline analisis dari EDA hingga inferensial sudah selesai dan ada di `
 
 > Pesan kunci: prevalensi sedikit turun, tetapi jumlah absolut naik **+6,6 juta** akibat pertumbuhan penduduk.
 
+**Perubahan jumlah perokok per umur tunggal 10–75 (pengembangan `p_jml_umur`):**
+
+| Indikator | Nilai |
+|-----------|-------|
+| Net perubahan absolut 10–75 (2024−2015) | **+6.440.137** (~6,44 jt) |
+| Growth agregat 10–75 | **+11,8%** |
+| Net usia ≥40 | +6.711.275 (~6,71 jt), growth **+27,1%** |
+| Net usia <20 | +29.287 (~+0,03 jt), growth **+1,3%** (nyaris datar) |
+| Net negatif terdalam | usia 35 (−239 rb), usia 29 (−206 rb), usia 32 (−176 rb) |
+| Net positif terbesar | usia 53 (+503 rb), usia 48 (+468 rb), usia 43 (+441 rb) |
+
+> Pola: kenaikan terkonsentrasi di usia paruh baya/tua (≥40), ada **penurunan** di usia ~25–35,
+> dan usia muda (<20) nyaris tak berubah. Growth di ujung umur muda (usia 10–11) sangat volatil
+> (basis kecil): usia 10 = −56%, usia 11 = +103%. Metode: weighted-sum sederhana (point estimate, tanpa CI).
+
+**Growth jumlah perokok absolut per pulau (usia 10+, 2015→2024):** semua pulau naik (↑).
+
+| Pulau | Growth |
+|-------|--------|
+| Maluku | +26,2% |
+| Bali-Nusra | +21,0% |
+| Sumatera | +12,3% |
+| Kalimantan | +11,6% |
+| Jawa | +11,2% |
+| Sulawesi | +9,8% |
+| Papua | +7,5% |
+
+> Secara absolut kenaikan terbesar tetap di **Jawa** (~32,8 jt → ~36,5 jt) dan **Sumatera**; growth
+> relatif tertinggi di **Maluku** dan **Bali-Nusra** (basis kecil).
+
 ### Visualisasi output (di `Output/`)
 
 | File | Deskripsi |
@@ -48,7 +78,16 @@ Seluruh pipeline analisis dari EDA hingga inferensial sudah selesai dan ada di `
 | `prev-perokok-umur-2015-2024.png` | Lineplot prevalensi per usia 10–65+, 2015 vs 2024 |
 | `jumlah-perokok-umur-2015-2024.png` | Lineplot jumlah perokok (ribu orang) per usia |
 | `prev-perokok-pulau-2015-2024.png` | Barplot prevalensi per pulau besar + label + ↑↓ |
+| `net-perokok-umur-2015-2024.png` | Lineplot net perubahan jumlah perokok absolut per umur tunggal 10–75 (ribu orang) + garis nol |
+| `growth-perokok-umur-2015-2024.png` | Lineplot pertumbuhan (%) jumlah perokok absolut per umur tunggal 10–75 + garis nol |
+| `growth-perokok-pulau-2015-2024.png` | Barplot jumlah perokok absolut per pulau 2015 vs 2024 (juta orang) + label growth % + ↑↓ (desain sama `p_prev_pulau`) |
 | `map-{merokok,tembakau,elektrik}-{all,10-18,26-30,51-55}.png` | 12 peta rasio prevalensi SUSENAS vs SKI |
+
+**Data pendukung (di `Data/`):**
+
+| File | Deskripsi |
+|------|-----------|
+| `perokok absolut per umur 2015-2024.xlsx` | Jumlah perokok tembakau absolut (weighted) per umur tunggal 10–75, kolom `usia`, `perokok_2015`, `perokok_2024`. Net & growth dihitung dari sini. |
 
 ### Temuan kunci analisis SUSENAS vs SKI 2023
 1. Selisih prevalensi perokok tembakau secara nasional: **3,35 pp** (SKI lebih tinggi)
@@ -91,7 +130,8 @@ File-file ini terlalu besar dan di-ignore via `.gitignore`. Harus tersedia lokal
 ## Hal yang belum / bisa dilanjutkan
 
 - [ ] **PAF (Population Attributable Fraction)** — `Data/by age jk for PAF (2015).xlsx` sudah disiapkan sebagai input, tapi script perhitungan PAF belum ada
-- [ ] **Analisis subgroup lebih lanjut** — tren 2015–2024 baru pada level nasional dan pulau besar; belum per provinsi atau urban/rural
+- [x] **Perubahan per umur tunggal 10–75** — net & growth jumlah perokok absolut per umur sudah dibuat (`net-`/`growth-perokok-umur-2015-2024.png` + `Data/perokok absolut per umur 2015-2024.xlsx`)
+- [ ] **Analisis subgroup lebih lanjut** — tren 2015–2024 baru pada level nasional, pulau besar, dan umur tunggal; belum per provinsi atau urban/rural
 - [ ] **Validasi angka dengan bobot kompleks (PSU/strata)** — script 07 menggunakan weighted sum sederhana (bukan `svymean`); untuk CI yang akurat gunakan pola di script 06
 - [ ] **Visualisasi jenis kelamin × umur** — jumlah perokok laki-laki vs perempuan per usia belum divisualisasikan
 - [ ] **Update laporan Word** — `[EXT] Report SUSENAS vs SKI.docx` di folder Downloads belum diupdate dengan temuan tren 2015–2024

@@ -232,3 +232,110 @@ p_prev_pulau
 
 ggsave("Output/prev-perokok-pulau-2015-2024.png", p_prev_pulau,
        width = 9, height = 5, dpi = 300)
+
+
+#--> Pengembangan p_jml_umur: perubahan antar-periode per umur-tunggal 10-75 ----
+## Catatan: 65+ tidak diagregasi (dipanjangkan jadi umur tunggal 10-75) agar
+## nilai absolut sebanding antar-umur. Weighted-sum sederhana (point estimate),
+## konsisten dengan angka headline; bukan svymean, tanpa CI.
+
+## Data dasar: jumlah perokok tembakau (weighted) per umur tunggal per tahun
+jml_umur_75 <- susenas |>
+  filter(usia >= 10, usia <= 75) |>
+  group_by(tahun, usia) |>
+  summarise(rokok = sum(rokok_tembakau), .groups = "drop") |>
+  tidyr::pivot_wider(names_from = tahun, values_from = rokok,
+                     names_prefix = "y", values_fill = 0) |>
+  arrange(usia) |>
+  mutate(net      = y2024 - y2015,
+         net_ribu = net / 1000,
+         growth   = if_else(y2015 > 0, (y2024 - y2015) / y2015, NA_real_))
+
+## 7. Perubahan bersih (net) jumlah perokok tembakau menurut umur (ribu orang)
+p_net_umur <- ggplot(jml_umur_75, aes(usia, net_ribu)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_line(linewidth = 0.9, color = "firebrick") +
+  geom_point(size = 1.2, color = "firebrick") +
+  scale_x_continuous(breaks = seq(10, 75, 5)) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Usia", y = "Perubahan jumlah perokok (ribu orang)", color = NULL,
+       title   = "Perubahan Bersih Jumlah Perokok Tembakau menurut Umur, 2015→2024",
+       caption = caption_sumber) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position  = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.title       = element_text(face = "italic", size = 12),
+        plot.caption     = element_text(hjust = 0, color = "gray40"))
+
+ggsave("Output/net-perokok-umur-2015-2024.png", p_net_umur,
+       width = 9, height = 5, dpi = 300)
+
+## 8. Pertumbuhan (growth, %) jumlah perokok tembakau absolut menurut umur
+p_growth_umur <- ggplot(jml_umur_75, aes(usia, growth)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_line(linewidth = 0.9, color = "firebrick") +
+  geom_point(size = 1.2, color = "firebrick") +
+  scale_x_continuous(breaks = seq(10, 75, 5)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(x = "Usia", y = "Pertumbuhan jumlah perokok", color = NULL,
+       title   = "Pertumbuhan Jumlah Perokok Tembakau menurut Umur, 2015→2024",
+       caption = caption_sumber) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position  = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.title       = element_text(face = "italic", size = 12),
+        plot.caption     = element_text(hjust = 0, color = "gray40"))
+
+ggsave("Output/growth-perokok-umur-2015-2024.png", p_growth_umur,
+       width = 9, height = 5, dpi = 300)
+
+## Export tabel: jumlah perokok absolut per umur (10-75) per periode
+## (net & growth dapat dihitung sendiri dari kolom perokok_2015 & perokok_2024)
+tab_perokok_umur <- jml_umur_75 |>
+  transmute(usia, perokok_2015 = y2015, perokok_2024 = y2024)
+
+rio::export(tab_perokok_umur, "Data/perokok absolut per umur 2015-2024.xlsx")
+
+
+## 9. Pertumbuhan (growth) jumlah perokok tembakau absolut menurut pulau ----
+## Desain sama dengan p_prev_pulau: bar dodge 2015 vs 2024 (jumlah, juta orang),
+## label growth % + panah ↑/↓ ditempel di bar 2024.
+jml_isl <- susenas |>
+  filter(usia >= 10) |>
+  group_by(tahun, isl) |>
+  summarise(jumlah = sum(rokok_tembakau), .groups = "drop") |>
+  mutate(jumlah_juta = jumlah / 1e6,
+         tahun       = factor(tahun))
+
+## label + arrow: growth 2024 vs 2015 per pulau, tempel di bar 2024
+jml_isl_arrow <- jml_isl |>
+  tidyr::pivot_wider(names_from = tahun, values_from = c(jumlah, jumlah_juta),
+                     names_sep = "_") |>
+  mutate(growth = (jumlah_2024 - jumlah_2015) / jumlah_2015,
+         arah   = if_else(growth >= 0, "↑", "↓"),   # ↑ / ↓
+         label  = paste0(scales::percent(growth, accuracy = 0.1), " ", arah))
+
+p_growth_pulau <- ggplot(jml_isl, aes(isl, jumlah_juta, fill = tahun)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_label(data = jml_isl_arrow,
+             aes(x = isl, y = jumlah_juta_2024, label = label, fill = NULL),
+             position    = position_dodge(width = 0.8),
+             hjust = 0.5, vjust = -0.3, size = 3.2, color = "gray20",
+             label.size  = 0.4, label.padding = unit(0.2, "lines"),
+             fill = "white", inherit.aes = FALSE) +
+  scale_y_continuous(labels = scales::comma,
+                     expand = expansion(mult = c(0, 0.12))) +
+  scale_fill_manual(values = warna_tahun) +
+  labs(x = NULL, y = "Jumlah perokok (juta orang)", fill = NULL,
+       title   = "Pertumbuhan Jumlah Perokok Tembakau menurut Pulau, 2015→2024",
+       caption = caption_sumber) +
+  theme_minimal(base_size = 11) +
+  theme(legend.position  = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.title       = element_text(face = "italic", size = 12),
+        plot.caption     = element_text(hjust = 0, color = "gray40"))
+
+p_growth_pulau
+
+ggsave("Output/growth-perokok-pulau-2015-2024.png", p_growth_pulau,
+       width = 9, height = 5, dpi = 300)

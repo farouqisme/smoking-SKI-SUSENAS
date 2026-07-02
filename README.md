@@ -90,6 +90,22 @@ Jalankan script berurutan: `01` → `02` → `03` → `04` → `05` → `06` →
 
 > Meskipun prevalensi sedikit turun, jumlah absolut perokok meningkat ~6,6 juta akibat pertumbuhan penduduk.
 
+#### Perubahan jumlah perokok per umur tunggal (10–75)
+
+Dua grafik pengembangan (per umur tunggal, tanpa kelompok umur) memisahkan efek perubahan pada tiap usia:
+
+- **Net perubahan jumlah absolut** (2024 − 2015): total **+6,44 juta** perokok pada rentang 10–75 tahun.
+- **Growth agregat 10–75:** **+11,8%**.
+- Kenaikan **terkonsentrasi pada usia ≥40 tahun** (net +6,71 juta; growth +27,1%), sedangkan usia <20 tahun nyaris datar (net +29 ribu; +1,3%).
+- Terdapat **penurunan** jumlah perokok pada usia sekitar **25–35 tahun** (terdalam di usia 35: −239 ribu; usia 29: −206 ribu).
+- Kenaikan bersih terbesar pada usia paruh baya (usia 53: +503 ribu; usia 48: +468 ribu; usia 43: +441 ribu).
+
+> Data pendukung per umur tersedia di `Data/perokok absolut per umur 2015-2024.xlsx` (kolom `usia`, `perokok_2015`, `perokok_2024`) untuk perhitungan lanjutan.
+
+#### Growth jumlah perokok absolut per pulau (usia 10+)
+
+Semua pulau mengalami **kenaikan** jumlah perokok absolut 2015→2024: Maluku **+26,2%**, Bali-Nusra **+21,0%**, Sumatera **+12,3%**, Kalimantan **+11,6%**, Jawa **+11,2%**, Sulawesi **+9,8%**, Papua **+7,5%**. Secara absolut kenaikan terbesar tetap di Jawa (~32,8 → ~36,5 juta) dan Sumatera. (Grafik: `Output/growth-perokok-pulau-2015-2024.png`.)
+
 ### Perbandingan SUSENAS vs SKI 2023
 
 - Perbedaan prevalensi perokok tembakau antar survei mencapai **3,35 pp** secara nasional.
